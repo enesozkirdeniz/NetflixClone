@@ -11,6 +11,9 @@ import Foundation
 struct Constans {
     static let API_KEY = "cf3089ce6934013ee9a4077a8b6e98a4"
     static let baseURL = "https://api.themoviedb.org"
+    static let YoutubeAPI_KEY = "AIzaSyCbcIxQom6chi0vfmqRzq6xUl5cx8zcbLo"
+    static let YoutubeBaseURL = "https://youtube.googleapis.com/youtube/v3/search?"
+    
 }
 
 enum APIError : Error {
@@ -148,6 +151,29 @@ class APICaller {
         task.resume()
     }
     
+    
+    func getMovie(with query : String, completion :  @escaping (Result<VideoElement, Error>) -> Void) {
+        
+        guard let query = query.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed) else {return}
+        
+        guard let url = URL(string: "\(Constans.YoutubeBaseURL)q=\(query)&key=\(Constans.YoutubeAPI_KEY)") else {return}
+        
+        let task = URLSession.shared.dataTask(with: URLRequest(url: url)) { data, _, error in
+            guard let data = data , error == nil else {
+                return
+            }
+            do {
+                let results = try JSONDecoder().decode(YoutubeSearchResponse.self , from: data)
+                completion(.success(results.items[0]))
+                
+            } catch {
+                completion(.failure(error))
+                print(error.localizedDescription)
+            }
+        }
+        task.resume()
+    }
+    
 }
 
 
@@ -158,4 +184,6 @@ class APICaller {
 //https://api.themoviedb.org/3/discover/movie?api_key=<<api_key>>&language=en-US&sort_by=popularity.desc&include_adult=false&include_video=false&page=1&with_watch_monetization_types=flatrate
 
 // https://api.themoviedb.org/3/search/movie?api_key={api_key}&query=Jack+Reacher
+
+//https://youtube.googleapis.com/youtube/v3/search?q=Harry&key=[YOUR_API_KEY]
 
